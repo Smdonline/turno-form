@@ -5,6 +5,9 @@ $(document).ready(function () {
     let oreGiornoLav = 30
     let step = 10
 
+    let minOreTurno = 2
+
+
     function creaza_griglia() {
 
         var griglia = $('<div \>', {
@@ -21,16 +24,45 @@ $(document).ready(function () {
     }
 
 
-    function init_container(initData) {
+    function init_container(initData,dataInizio,dataFine) {
+        let lungime = step * minOreTurno * 4;
+        let dateFornite = true
+        let stanga = 0
+        console.log(lungime)
         if (isNaN(new Date(initData).getTime())){
             let tmp=new Date()
             initData = tmp.getUTCFullYear()+"-"+putZero(tmp.getUTCMonth()+1)+"-"+putZero(tmp.getUTCDate())
-            console.log(initData)
+
         }
+
+        console.log(initData)
+        if (isNaN(new Date(dataInizio).getTime())){
+            let tmp1=new Date()
+            dataInizio = tmp1.getUTCFullYear()+"-"+putZero(tmp1.getUTCMonth()+1)+"-"+putZero(tmp1.getUTCDate())
+            dateFornite = false
+
+        }
+        else if (!isNaN(new Date(dataFine).getTime())){
+            let dif = new Date(dataFine) - new Date(dataInizio)
+            if (dif >= minOreTurno*3600*1000)
+            {
+                lungime = parseFloat(dif/(1000*3600))*step*4
+            }
+
+
+        }
+        console.log(lungime)
+        let dif=new Date(dataInizio+" UTC")-new Date(initData+" UTC")
+        if (dateFornite){
+            stanga = parseFloat(dif/(1000*3600))
+        }
+
         //creaza form
-        form = $('<form \>', {class: "mx-auto"}).appendTo('body');
+        let form = $('<form \>', {class: "mx-auto"}).appendTo('body');
         form.width(4 * step * oreGiornoLav)
         //fine creaza form
+
+
         //container dentro la form
         let mainContainer = $('<div \>',
             {
@@ -42,87 +74,127 @@ $(document).ready(function () {
         //let col0 = $('<div \>',{class: "col"}).appendTo(mainContainer)
         let giorno = $('<input \>',
             {
-                type: "date", class: 'form-control',value:initData
+                class: 'form-control',value:initData
             }
-        ).appendTo($('<div \>', {class: "col-3 align-self-start"}).appendTo(mainContainer));
-        giorno.datepicker({
-            dateFormat: "yy-mm-dd"
-        })
+        ).appendTo($('<div \>', {class: "col-2 align-self-start"}).appendTo(mainContainer));
+
+
         //-----col1----------------
-        let col1 = $('<div \>', {class: "col-3 "}).appendTo(mainContainer)
+        let col1 = $('<div \>', {class: "col-2 "}).appendTo(mainContainer)
         let nome = $('<input \>', {type: "text", class: 'form-control'}).appendTo(col1);
 
 
 
         //-----col2----------------
-        let col2 = $('<div \>', {class: "col-3"}).appendTo(mainContainer)
-        let inizio = $('<input \>', {class: 'form-control disabled', type: "text", readonly:"readonly",disabled:"disabled"}).appendTo(col2);
-        //-----col3----------------
-        let col3 = $('<div \>', {class: "col-3"}).appendTo(mainContainer)
-        let fine = $('<input \>', {class: 'form-control ', type: "text", readonly:"readonly", disabled:"disabled"}).appendTo(col3);
+        let col2 = $('<div \>',
+            {
+                class: "col-3"
+            }).appendTo(mainContainer)
+        let inizio = $('<input \>',
+            {
+                class: 'form-control disabled',
+                type: "text", readonly:"readonly",
+                disabled:"disabled"}
+            ).appendTo(col2);
 
+        //-----col3----------------
+        let col3 = $('<div \>', {class: "col-2"}).appendTo(mainContainer)
+        let fine = $('<input \>', {class: 'form-control ', type: "text", readonly:"readonly", disabled:"disabled"}).appendTo(col3);
+        //-----fine col3 ----------
+
+
+        //-----col4----------------
+
+        let col4 = $('<div \>', {class: "col-1"}).appendTo(mainContainer)
+        let closeBtn = $('<button\>', {class: "btn-close"}).appendTo(col4)
+        closeBtn.on("click", function () {
+            form.remove()
+        })
+
+        //-----fine col4-----------
         let container = $('<div />', {class: "col-12"}).appendTo(mainContainer);
 
         let dashed = $('<div />', {class: "dashed-grid "});
-        dashed.on('dblclick', function () {
-            if ($(this).children().length == 0) {
 
-                var lungime = step * 8;
-                var turno = $('<div \>', {
-                    class: 'selector',
-
-                });
-                turno.offset({left:40})
-                turno.attr('data-inizio', 0)
+        //set turno
 
 
-                turno.width(lungime);
-                turno.height(step);
-                lungime = lungime / (4 * step);
-                turno.attr('data-fine', lungime);
-                turno.attr('data-lungime', lungime);
-                inizio.val(getDate(giorno,strToTime(parseFloat(turno.attr("data-inizio")))))
-                fine.val(getDate(giorno,strToTime(parseFloat(turno.attr("data-fine")))))
+        var turno = $('<div \>', {
+            class: 'selector',
+
+        });
+
+        giorno.datepicker({
+            dateFormat: "yy-mm-dd",
+            onSelect: function(dateText, inst) {
+                populateTurnoValues(turno,inizio,fine,nome,giorno)
+            }
+        })
+        function setTurnoValues( stanga,lungime){
+            turno.offset({left:stanga*step*4})
+            turno.attr('data-inizio', stanga)
+            turno.width(lungime);
+            turno.height(step);
+            turno.attr('data-fine', stanga+parseInt(lungime/(4*step)));
+            turno.attr('data-lungime', lungime/ (4 * step));
+            inizio.val(getDate(giorno,parseFloat(turno.attr("data-inizio"))))
+            fine.val(getDate(giorno,parseFloat(turno.attr("data-fine"))))
+            nome.val(strToTime(lungime/(4 * step)))
+        }
+
+        turno.resizable(
+            {
+                handles: "w,e",
+                grid: [step],
+                maxWidth: 9 * 4 * step,
+                minWidth: step,
+                containment: "parent",
+                resize: function (event, ui) {
+
+                    $(this).attr("data-inizio", ui.position.left / (4 * step))
+                    lungime = parseFloat(ui.size.width / (4 * step));
+                    $(this).attr("data-fine",
+                        parseFloat((ui.position.left) / (4 * step) + lungime)
+                    )
+                    $(this).attr("data-lungime", lungime)
+                    inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
+                    fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
+                    nome.val(strToTime(lungime))
+
+                }
+            }
+        )
+        turno.draggable({
+            axis: "x",
+            grid: [step],
+            containment: "parent",
+            drag: function (event, ui) {
+                $(this).attr("data-inizio", ui.position.left / (4 * step))
+                $(this).attr("data-fine", parseFloat((ui.position.left) / (4 * step) + lungime))
+                // inizio.val($(this).attr("data-inizio"))
+                // fine.val($(this).attr("data-fine"))
+                inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
+                fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
                 nome.val(strToTime(lungime))
-                turno.resizable(
-                    {
-                        handles: "w,e",
-                        grid: [step],
-                        maxWidth: 9 * 4 * step,
-                        minWidth: step,
-                        containment: "parent",
-                        resize: function (event, ui) {
+            }
 
-                            $(this).attr("data-inizio", ui.position.left / (4 * step))
-                            lungime = parseFloat(ui.size.width / (4 * step));
-                            $(this).attr("data-fine",
-                                parseFloat((ui.position.left) / (4 * step) + lungime)
-                            )
-                            $(this).attr("data-lungime", lungime)
-                            inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
-                            fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
-                            nome.val(strToTime(lungime))
+        })
 
-                        }
-                    }
-                )
-                turno.draggable({
-                    axis: "x",
-                    grid: [step],
-                    containment: "parent",
-                    drag: function (event, ui) {
-                        $(this).attr("data-inizio", ui.position.left / (4 * step))
-                        $(this).attr("data-fine", parseFloat((ui.position.left) / (4 * step) + lungime))
-                        inizio.val($(this).attr("data-inizio"))
-                        fine.val($(this).attr("data-fine"))
-                        inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
-                        fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
-                        nome.val(strToTime(lungime))
-                    }
+        if(dateFornite) {
+            setTurnoValues(stanga,lungime)
+            turno.appendTo(dashed);
+        }
+        //-----fine set turno----------------------------------------------------------------
 
-                })
+        dashed.on('dblclick', function (e) {
+            if ($(this).children().length == 0) {
+                let rect = e.target.getBoundingClientRect()
+                let aici = parseInt((e.clientX - rect.left)/(4*step))
+                setTurnoValues(aici,lungime)
+
 
                 turno.appendTo(dashed);
+
             }
             else {
                 alert("este deja un turno");
@@ -132,8 +204,6 @@ $(document).ready(function () {
         // dashed.trigger('dblclick')
         let rooler = creaza_griglia()
         rooler.appendTo(container)
-        console.log(rooler.width())
-        console.log(dashed.width())
         dashed.appendTo(container)
 
         let subm = $('<input \>', {
@@ -141,6 +211,11 @@ $(document).ready(function () {
             type: "submit",
             value: "incarca"
         }).appendTo($('<div \>', {class: "col-12"}).appendTo(mainContainer))
+    }
+    function populateTurnoValues(object, start, end,tName,zi){
+        start.val(getDate(zi,parseFloat(object.attr("data-inizio"))))
+        end.val(getDate(zi,parseFloat(object.attr("data-fine"))))
+        tName.val(strToTime(object.attr("data-lungime")))
     }
     function putZero(valoare) {
         valoare=parseInt(valoare)
@@ -159,7 +234,7 @@ $(document).ready(function () {
         return putZero(zi) + ":" + putZero(ore_str) + ":" + putZero(minuti_str)
     }
 
-    function getDate(giorno,valoare){
+    function getDate(giorno, valoare){
         valoare = parseFloat(valoare) * 60*60*1000
         let myDate = new Date(giorno.val()+"Z")
 
@@ -173,9 +248,10 @@ $(document).ready(function () {
         return tmpDate
 
     }
-    $('#btn').on("click", function () {
-        init_container("1980-10-32");
-    });
-    init_container("1980-10-33")
 
+    $('#btn').on("click", function () {
+        init_container();
+    });
+    init_container("1980-10-03","1980-10-03 06:30","1980-10-03 10:15")
+        //
 });
