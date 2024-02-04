@@ -4,27 +4,70 @@
 $(document).ready(function () {
     let oreGiornoLav = 30
     let step = 10
-
     let minOreTurno = 2
+    let css_dashed = {
+        'min-height':'1.3em',
+        'max-width':(oreGiornoLav*4*step)+"px",
+        'padding-top' : '0.3em',
+        'background-size' : 2*step+'px 35px',
+        'background-repeat' : 'repeat-x',
+        'background-image' :    'linear-gradient(to right, black 1px, transparent 1px)' +
+        ',linear-gradient(to bottom, black 1px, transparent 1px)' +
+        ',linear-gradient(to right, transparent 1px, rgba(204, 199, 178, 0.5) 1px)',
+        'border-right':'1px solid black'
+    }
+    let css_juma={'padding-left': '2px',
+        'width': (step*4)+'px',
+        'height': '1em',
+        'font-size': '0.8em',
+        'text-align': 'left',
+        'display': 'inline-block'
 
-
-    function creaza_griglia() {
-
-        var griglia = $('<div \>', {
-            class: 'full-dashed-grid ',
-        }).width(40 * oreGiornoLav)
-        for (let i = 0; i < oreGiornoLav; i++) {
-            let strI = (i < 24) ? i : i % 24
-            $('<span \>', {
-                class: 'juma',
-                text: strI
-            }).appendTo(griglia)
-        }
-        return griglia
+    }
+    let css_turno = {
+        'min-height': '1em',
+        'background-color': 'darkred',
+        'background-image': 'linear-gradient(to right, #070003, #1d2923, #070003)',
+        'color':'white',
+        'display': 'inline-block'
+    }
+    let css_full_dashed_grid = {
+        'height': '1.2em',
+        'padding-top': '-1px',
+        'max-width' : (4*step * oreGiornoLav)+'px',
+        'background-color' : 'transparent',
+        'background-size' : 4*step+'px 35px',
+        'background-repeat' : 'repeat-x',
+        'background-image' : 'linear-gradient(to right, black 1px, transparent 1px),' +
+                            'linear-gradient(to bottom, black 1px, transparent 1px),' +
+                            'linear-gradient(to right, transparent 1px, rgba(204, 199, 178, 0.5) 1px)',
+        'display': 'flex'
     }
 
 
-    function init_container(initData,dataInizio,dataFine) {
+    function creaza_griglia() {
+        let header_div = $('<div \>').css(
+            {
+                'display':'grid',
+                'grid-template-columns': '400px '+ oreGiornoLav*4*step+"px 400px",
+            }
+        ).appendTo('body')
+        $('<div \>').appendTo(header_div)
+
+        var griglia = $('<div \>').css(css_full_dashed_grid)
+        for (let i = 0; i < oreGiornoLav; i++) {
+            let strI = (i < 24) ? i : i % 24
+            $('<span \>', {
+                text: strI
+            }).css(css_juma).appendTo(griglia)
+        }
+        griglia.appendTo(header_div)
+        $('<div \>').appendTo(header_div)
+
+    }
+
+
+    function crea_riga(initData,dataInizio,dataFine) {
         let lungime = step * minOreTurno * 4;
         let dateFornite = true
         let stanga = 0
@@ -34,8 +77,6 @@ $(document).ready(function () {
             initData = tmp.getUTCFullYear()+"-"+putZero(tmp.getUTCMonth()+1)+"-"+putZero(tmp.getUTCDate())
 
         }
-
-        console.log(initData)
         if (isNaN(new Date(dataInizio).getTime())){
             let tmp1=new Date()
             dataInizio = tmp1.getUTCFullYear()+"-"+putZero(tmp1.getUTCMonth()+1)+"-"+putZero(tmp1.getUTCDate())
@@ -58,37 +99,38 @@ $(document).ready(function () {
         }
 
         //creaza form
-        let form = $('<form \>', {class: "mx-auto"}).appendTo('body');
-        form.width(4 * step * oreGiornoLav)
+        let form = $('<form \>', {class: ""}).appendTo('body');
         //fine creaza form
 
 
         //container dentro la form
         let mainContainer = $('<div \>',
             {
-                class: "row justify-content-center "
+                class: "grid-container"
+            }
+        ).css(
+            {   'display':'grid',
+                'grid-template-columns': '400px '+ oreGiornoLav*4*step+'px 400px',
             }
         ).appendTo(form);
         //-------------------------
 
-        //let col0 = $('<div \>',{class: "col"}).appendTo(mainContainer)
-        let giorno = $('<input \>',
-            {
-                class: 'form-control',value:initData
-            }
-        ).appendTo($('<div \>', {class: "col-2 align-self-start"}).appendTo(mainContainer));
+        let col0 = $('<div \>',{class: ""}).appendTo(mainContainer)
+        let giorno = $('<input \>', {value:initData}).appendTo(col0);
 
 
         //-----col1----------------
-        let col1 = $('<div \>', {class: "col-2 "}).appendTo(mainContainer)
-        let nome = $('<input \>', {type: "text", class: 'form-control'}).appendTo(col1);
+
+        let nome = $('<input \>', {type: "text", class: 'form-control'}).appendTo(col0);
 
 
-
+        let col1 = $('<div \>', {class: ""}).css({
+            'min-width':oreGiornoLav*4*step+"px"
+        }).appendTo(mainContainer)
         //-----col2----------------
         let col2 = $('<div \>',
             {
-                class: "col-3"
+                class: ""
             }).appendTo(mainContainer)
         let inizio = $('<input \>',
             {
@@ -98,31 +140,32 @@ $(document).ready(function () {
             ).appendTo(col2);
 
         //-----col3----------------
-        let col3 = $('<div \>', {class: "col-2"}).appendTo(mainContainer)
-        let fine = $('<input \>', {class: 'form-control ', type: "text", readonly:"readonly", disabled:"disabled"}).appendTo(col3);
+        // let col3 = $('<div \>', {class: "col-2"}).appendTo(mainContainer)
+        let fine = $('<input \>',
+            {
+                type: "text",
+                readonly:"readonly",
+                disabled:"disabled"}).appendTo(col2);
         //-----fine col3 ----------
 
 
         //-----col4----------------
 
-        let col4 = $('<div \>', {class: "col-1"}).appendTo(mainContainer)
-        let closeBtn = $('<button\>', {class: "btn-close"}).appendTo(col4)
+        // let col4 = $('<div \>', {class: "col-1"}).appendTo(mainContainer)
+        let closeBtn = $('<button\>', {class: "btn-close"}).appendTo(col2)
         closeBtn.on("click", function () {
             form.remove()
         })
 
         //-----fine col4-----------
-        let container = $('<div />', {class: "col-12"}).appendTo(mainContainer);
+        // let container = $('<div />', {class: "col-12"}).appendTo(mainContainer);
 
-        let dashed = $('<div />', {class: "dashed-grid "});
+        let dashed = $('<div />').css(css_dashed)
 
         //set turno
 
 
-        var turno = $('<div \>', {
-            class: 'selector',
-
-        });
+        var turno = $('<div \>').css(css_turno);
 
         giorno.datepicker({
             dateFormat: "yy-mm-dd",
@@ -157,9 +200,8 @@ $(document).ready(function () {
                         parseFloat((ui.position.left) / (4 * step) + lungime)
                     )
                     $(this).attr("data-lungime", lungime)
-                    inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
-                    fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
-                    nome.val(strToTime(lungime))
+                    populateTurnoValues($(this),inizio,fine,nome,giorno)
+
 
                 }
             }
@@ -171,11 +213,8 @@ $(document).ready(function () {
             drag: function (event, ui) {
                 $(this).attr("data-inizio", ui.position.left / (4 * step))
                 $(this).attr("data-fine", parseFloat((ui.position.left) / (4 * step) + lungime))
-                // inizio.val($(this).attr("data-inizio"))
-                // fine.val($(this).attr("data-fine"))
-                inizio.val(getDate(giorno,parseFloat($(this).attr("data-inizio"))))
-                fine.val(getDate(giorno,parseFloat($(this).attr("data-fine"))))
-                nome.val(strToTime(lungime))
+                populateTurnoValues($(this),inizio,fine,nome,giorno)
+
             }
 
         })
@@ -202,20 +241,19 @@ $(document).ready(function () {
 
         })
         // dashed.trigger('dblclick')
-        let rooler = creaza_griglia()
-        rooler.appendTo(container)
-        dashed.appendTo(container)
+        dashed.appendTo(col1)
 
         let subm = $('<input \>', {
-            class: 'btn',
+            class: 'btn  btn-outline-primary btn-sm',
             type: "submit",
             value: "incarca"
-        }).appendTo($('<div \>', {class: "col-12"}).appendTo(mainContainer))
+        }).appendTo().appendTo(col2)
     }
     function populateTurnoValues(object, start, end,tName,zi){
-        start.val(getDate(zi,parseFloat(object.attr("data-inizio"))))
-        end.val(getDate(zi,parseFloat(object.attr("data-fine"))))
-        tName.val(strToTime(object.attr("data-lungime")))
+
+        isNaN(object.attr("data-inizio")) || start.val(getDate(zi,parseFloat(object.attr("data-inizio"))))
+        isNaN(object.attr("data-fine")) ||end.val(getDate(zi,parseFloat(object.attr("data-fine"))))
+        isNaN(object.attr("data-lungime")) ||tName.val(strToTime(object.attr("data-lungime")))
     }
     function putZero(valoare) {
         valoare=parseInt(valoare)
@@ -250,8 +288,9 @@ $(document).ready(function () {
     }
 
     $('#btn').on("click", function () {
-        init_container();
+        crea_riga()
     });
-    init_container("1980-10-03","1980-10-03 06:30","1980-10-03 10:15")
+    creaza_griglia()
+    crea_riga("1980-10-03","1980-10-03 06:30","1980-10-03 10:15")
         //
 });
