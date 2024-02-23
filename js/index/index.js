@@ -2,9 +2,35 @@
  * Created by socia on 1/6/2024.
  */
 $(document).ready(function () {
-    let oreGiornoLav = 30
-    let step = 10
+    let oreGiornoLav = 31
+    let step = 7
     let minOreTurno = 2
+    let doc_width = 900
+    let laterali= parseInt(doc_width/3)
+    let width_griglia = parseInt(doc_width-2*laterali)
+
+    function init_display() {
+            if(window.innerWidth > doc_width){
+                doc_width = window.innerWidth
+                laterali= parseInt(doc_width/6)
+                width_griglia = parseInt(doc_width-2*laterali)
+                step=parseInt(width_griglia/(oreGiornoLav*4))
+            }
+
+    }
+
+    init_display()
+
+
+    let css_grid_main = {
+        'display':'grid',
+        'grid-template-columns': laterali+'px '+ oreGiornoLav*4*step+'px '+laterali+'px'
+    }
+
+    let css_mezzo_lat = {
+        'width': parseInt(laterali/2)+'px'
+    }
+
     let css_dashed = {
         'min-height':'1.3em',
         'max-width':(oreGiornoLav*4*step)+"px",
@@ -43,15 +69,13 @@ $(document).ready(function () {
                             'linear-gradient(to right, transparent 1px, rgba(204, 199, 178, 0.5) 1px)',
         'display': 'flex'
     }
+    let input_width = {
+        'width': '110px'
+    }
 
-
+    console.log(`screen width ${screen.width}`)
     function creaza_griglia() {
-        let header_div = $('<div \>').css(
-            {
-                'display':'grid',
-                'grid-template-columns': '400px '+ oreGiornoLav*4*step+"px 400px",
-            }
-        ).appendTo('body')
+        let header_div = $('<div \>').css(css_grid_main).appendTo('body')
         $('<div \>').appendTo(header_div)
 
         var griglia = $('<div \>').css(css_full_dashed_grid)
@@ -92,52 +116,49 @@ $(document).ready(function () {
 
 
         }
-        console.log(lungime)
+        console.log("lung="+lungime)
         let dif=new Date(dataInizio+" UTC")-new Date(initData+" UTC")
         if (dateFornite){
             stanga = parseFloat(dif/(1000*3600))
         }
 
         //creaza form
-        let form = $('<form \>', {class: ""}).appendTo('body');
+        let form = $('<form \>').appendTo('body');
         //fine creaza form
 
 
         //container dentro la form
-        let mainContainer = $('<div \>',
-            {
-                class: "grid-container"
-            }
-        ).css(
-            {   'display':'grid',
-                'grid-template-columns': '400px '+ oreGiornoLav*4*step+'px 400px'
-            }
-        ).appendTo(form);
+        let mainContainer = $('<div \>').css(css_grid_main).appendTo(form);
         //-------------------------
 
-        let col0 = $('<div \>',{class: ""}).appendTo(mainContainer)
-        let giorno = $('<input \>', {value:initData}).appendTo(col0);
+        let col0 = $('<div \>').appendTo(mainContainer)
+        let giorno = $('<input \>', {
+            value:initData,
+            class: 'form-control',
+            type: "text"
+        }).css(input_width).appendTo(col0);
 
 
         //-----col1----------------
 
-        let nome = $('<input \>', {type: "text", class: 'form-control'}).appendTo(col0);
+        let nome = $('<input \>', {
+            class: 'form-control disabled',
+            type: "text", readonly:"readonly",
+            disabled:"disabled"
+        }).css(input_width).appendTo(col0);
 
 
-        let col1 = $('<div \>', {class: ""}).css({
-            'min-width':oreGiornoLav*4*step+"px"
+        let col1 = $('<div \>').css({
+            'width': width_griglia+"px"
         }).appendTo(mainContainer)
         //-----col2----------------
-        let col2 = $('<div \>',
-            {
-                class: ""
-            }).appendTo(mainContainer)
+        let col2 = $('<div \>').appendTo(mainContainer)
         let inizio = $('<input \>',
             {
                 class: 'form-control disabled',
                 type: "text", readonly:"readonly",
                 disabled:"disabled"}
-            ).appendTo(col2);
+            ).css(input_width).appendTo(col2);
 
         //-----col3----------------
         // let col3 = $('<div \>', {class: "col-2"}).appendTo(mainContainer)
@@ -145,7 +166,7 @@ $(document).ready(function () {
             {
                 type: "text",
                 readonly:"readonly",
-                disabled:"disabled"}).appendTo(col2);
+                disabled:"disabled"}).css(input_width).appendTo(col2);
         //-----fine col3 ----------
 
 
@@ -178,10 +199,14 @@ $(document).ready(function () {
             turno.attr('data-inizio', stanga)
             turno.width(lungime);
             turno.height(step);
-            turno.attr('data-fine', stanga+parseInt(lungime/(4*step)));
             turno.attr('data-lungime', lungime/ (4 * step));
+            turno.attr('data-fine', stanga+parseFloat(lungime/ (4 * step)));
+
             inizio.val(getDate(giorno,parseFloat(turno.attr("data-inizio"))))
             fine.val(getDate(giorno,parseFloat(turno.attr("data-fine"))))
+
+
+
             nome.val(strToTime(lungime/(4 * step)))
         }
 
@@ -211,9 +236,12 @@ $(document).ready(function () {
             grid: [step],
             containment: "parent",
             drag: function (event, ui) {
+
                 $(this).attr("data-inizio", ui.position.left / (4 * step))
-                $(this).attr("data-fine", parseFloat((ui.position.left) / (4 * step) + lungime))
-                populateTurnoValues($(this),inizio,fine,nome,giorno)
+                $(this).attr("data-fine",
+                    parseFloat(ui.position.left / (4 * step) +parseFloat($(this).attr("data-lungime")))
+                )
+                populateTurnoValues($(this), inizio, fine, nome, giorno)
 
             }
 
@@ -292,5 +320,4 @@ $(document).ready(function () {
     });
     creaza_griglia()
     crea_riga("1980-10-03","1980-10-03 06:30","1980-10-03 10:15")
-        //
 });
