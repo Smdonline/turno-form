@@ -110,7 +110,7 @@ $(document).ready(function () {
             }
         ).css(
             {   'display':'grid',
-                'grid-template-columns': '400px '+ oreGiornoLav*4*step+'px 400px',
+                'grid-template-columns': '400px '+ oreGiornoLav*4*step+'px 400px'
             }
         ).appendTo(form);
         //-------------------------
