@@ -12,7 +12,7 @@ $(document).ready(function () {
     function init_display() {
             if(window.innerWidth > doc_width){
                 doc_width = window.innerWidth
-                laterali= parseInt(doc_width/6)
+                laterali= parseInt(doc_width/10)
                 width_griglia = parseInt(doc_width-2*laterali)
                 step=parseInt(width_griglia/(oreGiornoLav*4))
             }
@@ -24,7 +24,7 @@ $(document).ready(function () {
 
     let css_grid_main = {
         'display':'grid',
-        'grid-template-columns': laterali+'px '+ oreGiornoLav*4*step+'px '+laterali+'px'
+        'grid-template-columns': laterali+'px '+ oreGiornoLav*4*step+'px '+1.5*laterali+'px'
     }
 
     let css_mezzo_lat = {
@@ -73,9 +73,8 @@ $(document).ready(function () {
         'width': '110px'
     }
 
-    console.log(`screen width ${screen.width}`)
-    function creaza_griglia() {
-        let header_div = $('<div \>').css(css_grid_main).appendTo('body')
+    function creaza_griglia(lineare) {
+        let header_div = $('<div \>').css(css_grid_main).appendTo(lineare.container)
         $('<div \>').appendTo(header_div)
 
         var griglia = $('<div \>').css(css_full_dashed_grid)
@@ -91,16 +90,11 @@ $(document).ready(function () {
     }
 
 
-    function crea_riga(initData,dataInizio,dataFine) {
+    function crea_riga(lineare,dataInizio,dataFine) {
         let lungime = step * minOreTurno * 4;
         let dateFornite = true
         let stanga = 0
-        console.log(lungime)
-        if (isNaN(new Date(initData).getTime())){
-            let tmp=new Date()
-            initData = tmp.getUTCFullYear()+"-"+putZero(tmp.getUTCMonth()+1)+"-"+putZero(tmp.getUTCDate())
 
-        }
         if (isNaN(new Date(dataInizio).getTime())){
             let tmp1=new Date()
             dataInizio = tmp1.getUTCFullYear()+"-"+putZero(tmp1.getUTCMonth()+1)+"-"+putZero(tmp1.getUTCDate())
@@ -116,14 +110,13 @@ $(document).ready(function () {
 
 
         }
-        console.log("lung="+lungime)
-        let dif=new Date(dataInizio+" UTC")-new Date(initData+" UTC")
+        let dif=new Date(dataInizio+" UTC")-new Date(lineare.data+" UTC")
         if (dateFornite){
             stanga = parseFloat(dif/(1000*3600))
         }
 
         //creaza form
-        let form = $('<form \>').appendTo('body');
+        let form = $('<div \>',{'class':'riga-lineare'}).appendTo(lineare.container);
         //fine creaza form
 
 
@@ -132,11 +125,11 @@ $(document).ready(function () {
         //-------------------------
 
         let col0 = $('<div \>').appendTo(mainContainer)
-        let giorno = $('<input \>', {
-            value:initData,
-            class: 'form-control',
-            type: "text"
-        }).css(input_width).appendTo(col0);
+        // let giorno = $('<input \>', {
+        //     value:lineare.data,
+        //     class: 'form-control',
+        //     type: "text"
+        // }).css(input_width).appendTo(col0);
 
 
         //-----col1----------------
@@ -179,7 +172,6 @@ $(document).ready(function () {
         })
 
         //-----fine col4-----------
-        // let container = $('<div />', {class: "col-12"}).appendTo(mainContainer);
 
         let dashed = $('<div />').css(css_dashed)
 
@@ -188,12 +180,6 @@ $(document).ready(function () {
 
         var turno = $('<div \>').css(css_turno);
 
-        giorno.datepicker({
-            dateFormat: "yy-mm-dd",
-            onSelect: function(dateText, inst) {
-                populateTurnoValues(turno,inizio,fine,nome,giorno)
-            }
-        })
         function setTurnoValues( stanga,lungime){
             turno.offset({left:stanga*step*4})
             turno.attr('data-inizio', stanga)
@@ -202,8 +188,8 @@ $(document).ready(function () {
             turno.attr('data-lungime', lungime/ (4 * step));
             turno.attr('data-fine', stanga+parseFloat(lungime/ (4 * step)));
 
-            inizio.val(getDate(giorno,parseFloat(turno.attr("data-inizio"))))
-            fine.val(getDate(giorno,parseFloat(turno.attr("data-fine"))))
+            inizio.val(getDate(lineare.data,parseFloat(turno.attr("data-inizio"))))
+            fine.val(getDate(lineare.data,parseFloat(turno.attr("data-fine"))))
 
 
 
@@ -214,7 +200,7 @@ $(document).ready(function () {
             {
                 handles: "w,e",
                 grid: [step],
-                maxWidth: 9 * 4 * step,
+                // maxWidth: 9 * 4 * step,
                 minWidth: step,
                 containment: "parent",
                 resize: function (event, ui) {
@@ -225,13 +211,14 @@ $(document).ready(function () {
                         parseFloat((ui.position.left) / (4 * step) + lungime)
                     )
                     $(this).attr("data-lungime", lungime)
-                    populateTurnoValues($(this),inizio,fine,nome,giorno)
+                    populateTurnoValues($(this),inizio,fine,nome,lineare.data)
 
 
                 }
             }
         )
-        turno.draggable({
+        turno.draggable(
+            {
             axis: "x",
             grid: [step],
             containment: "parent",
@@ -241,7 +228,7 @@ $(document).ready(function () {
                 $(this).attr("data-fine",
                     parseFloat(ui.position.left / (4 * step) +parseFloat($(this).attr("data-lungime")))
                 )
-                populateTurnoValues($(this), inizio, fine, nome, giorno)
+                populateTurnoValues($(this), inizio, fine, nome, lineare.data)
 
             }
 
@@ -271,11 +258,6 @@ $(document).ready(function () {
         // dashed.trigger('dblclick')
         dashed.appendTo(col1)
 
-        let subm = $('<input \>', {
-            class: 'btn  btn-outline-primary btn-sm',
-            type: "submit",
-            value: "incarca"
-        }).appendTo().appendTo(col2)
     }
     function populateTurnoValues(object, start, end,tName,zi){
 
@@ -297,12 +279,15 @@ $(document).ready(function () {
         let minuti = parseInt(valoare % 60)
         let ore_str = (ore > 9) ? "" + ore : "0" + ore
         let minuti_str = (minuti > 9) ? "" + minuti : "0" + minuti
-        return putZero(zi) + ":" + putZero(ore_str) + ":" + putZero(minuti_str)
+        let tmp = ""
+        if(zi>0) tmp=tmp+putZero(zi)+":"
+
+        return tmp + putZero(ore_str) + ":" + putZero(minuti_str)
     }
 
     function getDate(giorno, valoare){
         valoare = parseFloat(valoare) * 60*60*1000
-        let myDate = new Date(giorno.val()+"Z")
+        let myDate = new Date(giorno+"Z")
 
         myDate.setMilliseconds(valoare)
 
@@ -315,9 +300,42 @@ $(document).ready(function () {
 
     }
 
+    class Lineare{
+        constructor(data,parent){
+            if (isNaN(new Date(data).getTime())){
+                let tmp=new Date()
+                data = tmp.getUTCFullYear()+"-"+putZero(tmp.getUTCMonth()+1)+"-"+putZero(tmp.getUTCDate())
+
+            }
+            this.data=data
+            this.container=$('<div \>',{'class':'lineare'}).appendTo(parent)
+            this.giorno = $('<input \>', {
+                value:this.data,
+                class: 'form-control',
+                type: "text"
+            }).css(input_width).appendTo(this.container);
+            // this.giorno.datepicker({
+            //     dateFormat: "yy-mm-dd",
+            //     onSelect: function(dateText, inst) {
+            //         this.data=dateText
+            //         //populateTurnoValues(turno,inizio,fine,nome,giorno)
+            //     }
+            // })
+        }
+        getRighe(){
+            return this.container.children('.riga-lineare')
+        }
+    }
+    let lineare = new Lineare("1980-10-03","body")
     $('#btn').on("click", function () {
-        crea_riga()
-    });
-    creaza_griglia()
-    crea_riga("1980-10-03","1980-10-03 06:30","1980-10-03 10:15")
+        crea_riga(lineare)
+    })
+    creaza_griglia(lineare)
+    crea_riga(lineare,"1980-10-03 06:30","1980-10-03 10:15")
+    crea_riga(lineare,"1980-10-03 06:30","1980-10-03 10:15")
+    crea_riga(lineare/*,"1980-10-03 06:30","1980-10-03 10:15"*/)
+    crea_riga(lineare/*,"1980-10-03 06:30","1980-10-03 10:15"*/)
+    crea_riga(lineare/*,"1980-10-03 06:30","1980-10-03 10:15"*/)
+    console.log(lineare.getRighe())
+
 });
